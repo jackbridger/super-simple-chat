@@ -44,7 +44,7 @@ export const secureClientRoutesWithJWTs = async (req:Request, res:Response, next
   // TO DO  - need to make sure these routes are secure
   const nonSecureRoutes = ['/get-chat-token','/get-server-api-key',"/apps","/companies","/developers"]
   if (req.path === "/" && req.method === "GET"){
-    res.sendStatus(200)
+    return next()
   }
 
   console.log(req.path.split("/"))

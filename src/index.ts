@@ -64,7 +64,7 @@ app.delete("/channels/:channel_id", deleteChannelByID); // done
 app.get("/channels", getAllChannels) // need to make changes
 app.get("/channels/:channel_id/messages", getMessagesInAChannel) 
 
-app.post("/channels/:channel_id/users/:user_id", () => console.log("join a channel"));
+// app.post("/channels/:channel_id/users/:user_id", () => console.log("join a channel"));
 
 // Messages
 app.post("/messages", sendMessageToChannel) // done
