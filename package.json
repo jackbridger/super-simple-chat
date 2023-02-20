@@ -1,28 +1,29 @@
 {
-  "name": "supabase-node-chat-backend",
+  "name": "super-simple-chat",
   "version": "1.0.0",
-  "description": "Node backend for a chat application, using Supabase",
+  "description": "API for simple chat applications",
   "main": "index.ts",
   "scripts": {
-    "start": "nodemon -r dotenv/config src/index.ts",
+    "dev": "nodemon -r dotenv/config src/index.ts",
+    "start": "ts-node -r dotenv/config src/index.ts",
     "lint": "eslint . --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nsmet/supabase-node-chat-backend.git"
+    "url": "git+https://github.com/jackbridger/super-simple-chat.git"
   },
   "keywords": [
     "supabase",
     "node",
     "chat"
   ],
-  "author": "Nick Smet",
+  "author": "Jack Bridger",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/nsmet/supabase-node-chat-backend/issues"
+    "url": "https://github.com/jackbridger/super-simple-chat/issues"
   },
-  "homepage": "https://github.com/nsmet/supabase-node-chat-backend#readme",
+  "homepage": "https://github.com/jackbridger/super-simple-chat#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.4.1",
     "@types/jsonwebtoken": "^9.0.1",
