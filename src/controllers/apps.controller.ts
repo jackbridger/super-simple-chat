@@ -8,7 +8,7 @@ export const createNewApp = async (req:TypedRequestBody<{name:string,developer_i
     const name = req.body.name
     const devID = req.body.developer_id
     // TODO - need to get companyID myself from user.
-    const companyID = "0d871b21-03d6-4e75-873a-480d5ae097b9"
+    const companyID = "189ba3e1-8411-4234-9e78-d170c65a6bf4"
     const appID = await addApp(name)
     if(!appID) return res.sendStatus(500)
     const companyAppID = await addCompanyApp(companyID,appID)

@@ -1,20 +1,3 @@
-drop table if exists companies;
-drop table if exists apps;
-drop table if exists api_keys;
-drop table if exists users;
-drop table if exists channels;
-drop table if exists messages;
-drop table if exists user_app;
-drop table if exists company_app;
-drop table if exists api_key_app;
-drop table if exists user_channel;
-drop table if exists message_channel;
-drop table if exists message_user;
-drop table if exists developers;
-drop table if exists company_developer;
-drop table if exists developer_app;
-drop table if exists api_key_developer;
-
 CREATE TABLE companies (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
@@ -33,13 +16,6 @@ CREATE TABLE api_keys (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     api_key VARCHAR(255) NOT NULL,
-    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-    updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
-CREATE TABLE developers (
-    id UUID PRIMARY KEY default uuid_generate_v4(),
-    username VARCHAR(255) NOT NULL,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -161,5 +137,10 @@ EXECUTE PROCEDURE trigger_set_timestamp();
 
 CREATE TRIGGER set_timestamp
 BEFORE UPDATE ON messages
+FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp
+BEFORE UPDATE ON developers
 FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();

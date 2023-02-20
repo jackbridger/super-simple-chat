@@ -8,7 +8,7 @@ import supabase from "../utils/supabase";
 
 export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:Response) => {
     // Get that from Supabase Auth
-  const devID = "b29c513b-4e9d-4479-8b36-c9eb9ca7f870"
+  const devID = "2a81bd96-7abc-46ea-91b2-e47d7f8f9d0c"
     // CompanyID should come from the users auth id?
     const companyID = "d17f074e-baa9-4391-b24e-0c41f7944553"
     const appID = req.body.appID

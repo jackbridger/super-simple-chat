@@ -62,7 +62,7 @@ app.get("/channels/:channel_id", getChannelByID); // kind of working except mess
 app.put("/channels/:channel_id", updateChannelByID); // done 
 app.delete("/channels/:channel_id", deleteChannelByID); // done
 app.get("/channels", getAllChannels) // need to make changes
-app.get("/channels/:channel_id/messages", getMessagesInAChannel)
+app.get("/channels/:channel_id/messages", getMessagesInAChannel) 
 
 app.post("/channels/:channel_id/users/:user_id", () => console.log("join a channel"));
 
@@ -77,11 +77,11 @@ app.post("/apps",createNewApp) // done
 app.delete("/apps/:app_id", deleteAppByID); // need to do 
 
 // Companies
-app.post("/companies", createNewCompany); // dont need now 
+app.post("/companies", createNewCompany); // done
 
 // Unclear parts
 app.post("/users/connect", connectUser);
 app.get("/users/search?q=:query", searchUsers);
 
 
-server.listen(3000);
+server.listen(3001);
