@@ -84,4 +84,4 @@ app.post("/users/connect", connectUser);
 app.get("/users/search?q=:query", searchUsers);
 
 
-server.listen(3001);
+server.listen(process.env.PORT || 3001);
