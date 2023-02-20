@@ -43,6 +43,10 @@ export function extractDataFromJWT (req:Request) {
 export const secureClientRoutesWithJWTs = async (req:Request, res:Response, next:NextFunction) =>{
   // TO DO  - need to make sure these routes are secure
   const nonSecureRoutes = ['/get-chat-token','/get-server-api-key',"/apps","/companies","/developers"]
+  if (req.path === "/" && req.method === "GET"){
+    res.sendStatus(200)
+  }
+
   console.log(req.path.split("/"))
   const initialPath = req.path.split("/")[1]
   if (initialPath === "apps" && req.method === "DELETE"){

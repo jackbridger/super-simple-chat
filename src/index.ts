@@ -34,7 +34,7 @@ app.use(cors())
 
 app.use(secureClientRoutesWithJWTs);
 
-app.get("/", function (req, res) {
+app.get("/", function (req:Request, res:Response) {
   return res.send("Thanks for using our chat API. Please check out our docs");
 });
 
