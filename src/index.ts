@@ -1,27 +1,21 @@
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 
-import { searchUsers, getAllUsers, getUserByID, updateCurrentUser, deleteUserByID, deleteCurrentUser } from './controllers/users.controller';
+import { getAllUsers, getUserByID, } from './controllers/users.controller';
 import Socket from "./utils/socket";
 
 import { 
   createChannel as createChannel, 
-  deleteChannelByID, 
   getAllChannels, 
   getChannelByID, 
   getChannelMessages as getMessagesInAChannel, 
-  updateChannelByID
 } from './controllers/channels.controller';
-import { deleteMessageByID, getMessageByID, sendMessageToChannel, updateMessageByID } from "./controllers/messages.controller";
-import { getServerAPIKey } from "./controllers/authentication.controller";
+import {  getMessageByID, sendMessageToChannel } from "./controllers/messages.controller";
 import { createToken } from "./controllers/authentication.controller";
 import { secureClientRoutesWithJWTs } from "./utils/auth";
-import { createNewApp,deleteAppByID } from "./controllers/apps.controller";
-import { createNewCompany } from "./controllers/companies.controller";
-import { createDeveloper } from "./controllers/developers.controller";
 
 const app = express();
 const server = http.createServer(app);
@@ -32,61 +26,21 @@ app.use(bodyParser.urlencoded({ extended: false}));
 app.use(bodyParser.json());
 app.use(cors())
 
-
 app.use(secureClientRoutesWithJWTs);
 
 app.get("/", function (req:Request, res:Response) {
   return res.sendStatus(200);
 });
 
-// DEVELOPERS ENDPOINTS
-app.post("/developers", createDeveloper) // done
-
-// AUTHENTICATION ENDPOINTS
-
-
-app.post("/users/token",createToken); // done (with some checks needed)
-
-// USER ENDPOINTS
-// app.post("/users", createUser); // working
-app.get("/users", getAllUsers); // Think its working 
-app.put("/users", updateCurrentUser ); // working
-app.get("/users/:user_id", getUserByID); //  working
-app.delete("/users", deleteCurrentUser); // working (need to double check though)
-
-// TO DO - need to do these ones
-// app.delete("/users/:user_id",deleteUserByID);
-// app.put("/users/:user_id",updateUserByID);
-
-// CHANNEL ENDPOINTS
-app.post("/channels", createChannel); // working
-app.get("/channels/:channel_id", getChannelByID); // kind of working except messages
-app.put("/channels/:channel_id", updateChannelByID); // done 
-app.delete("/channels/:channel_id", deleteChannelByID); // done
-app.get("/channels", getAllChannels) // need to make changes
-app.get("/channels/:channel_id/messages", getMessagesInAChannel) 
-
-// app.post("/channels/:channel_id/users/:user_id", () => console.log("join a channel"));
-
-// Messages
-app.post("/messages", sendMessageToChannel) // done
-app.get("/messages/:message_id",getMessageByID); // done 
-app.put("/messages/:message_id", updateMessageByID); // done 
-app.delete("/messages/:message_id", deleteMessageByID); // done
-
-// App
-app.post("/apps",createNewApp) // done
-app.delete("/apps/:app_id", deleteAppByID); // need to do 
-
-// Companies
-app.post("/companies", createNewCompany); // done
-
-// Unclear parts
-// app.post("/users/connect", connectUser);
-app.get("/users/search?q=:query", searchUsers);
-
-// Removed/moved
-// app.get("/get-server-api-key", getServerAPIKey); // done 
-
+// MVP endpoints
+app.post("/users/token",createToken); // ✅
+app.post("/channels", createChannel);  // ❌
+app.post("/messages", sendMessageToChannel) // ❌
+app.get("/channels/:channel_id", getChannelByID); //❌
+app.get("/channels", getAllChannels) //❌
+app.get("/users", getAllUsers); // ❌
+app.get("/users/:user_id", getUserByID); //  ❌
+app.get("/messages/:message_id",getMessageByID); //❌
+app.get("/channels/:channel_id/messages", getMessagesInAChannel) // ❌
 
 server.listen(process.env.PORT || 3001);

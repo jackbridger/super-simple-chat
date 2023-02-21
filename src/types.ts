@@ -71,6 +71,7 @@ export interface UserPayLoad {
     userID:string;
     companyID:string;
     appID:string;
+    externalUserID:string;
     iat:number;
     exp:number
   }

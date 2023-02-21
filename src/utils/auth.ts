@@ -10,7 +10,7 @@ function verifyToken(token:string) {
     if (!jwtKey) throw new Error("No JWT key found")
     if (!token) return false
     try{
-      const {userID,companyID,appID} = jwt.verify(token,jwtKey) as UserPayLoad
+      const {userID,companyID,appID, externalUserID} = jwt.verify(token,jwtKey) as UserPayLoad
       if (!companyID){
         return false
       }
@@ -18,6 +18,9 @@ function verifyToken(token:string) {
         return false
       }
       if (!appID){
+        return false
+      }
+      if (!externalUserID){
         return false
       }
       return true
@@ -35,8 +38,8 @@ export function extractDataFromJWT (req:Request) {
   if (!token) return false
 
 
-  const {userID,companyID,appID} =  jwt.verify(token,jwtKey) as UserPayLoad
-  return ({userID,companyID,appID})
+  const {userID,companyID,appID, externalUserID} =  jwt.verify(token,jwtKey) as UserPayLoad
+  return ({userID,companyID,appID,externalUserID})
 }
 
 export const secureClientRoutesWithJWTs = async (req:Request, res:Response, next:NextFunction) =>{

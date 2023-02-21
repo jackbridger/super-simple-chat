@@ -93,7 +93,7 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
       return res.status(400).json({ error: 'Invalid API key' });
     }
 
-    const userID = await checkIfUserExistsOrCreate(externalUserID,appID,displayName)
+    const {userID} = await checkIfUserExistsOrCreate(externalUserID,appID,displayName)
   
     const claims = { userID,externalUserID: externalUserID,companyID,appID }
     // To do - make async?
@@ -104,33 +104,43 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
   }
 
 
-  const checkIfUserExistsOrCreate = async (externalUserID:string,appID:string, displayName:string):Promise<string> => {
+  const checkIfUserExistsOrCreate = async (externalUserID:string,appID:string, displayName:string):Promise<{
+    userID: string,
+    displayName: string
+  }> => {
     let userID = null
-    userID = await getUserIDIfExistsInApp(externalUserID,appID)
-    if (userID) {
-      return userID
+    const existingUser= await getUserIDIfExistsInApp(externalUserID,appID)
+    if (existingUser && existingUser.userID) {
+      return {
+        userID:existingUser.userID,
+        displayName: displayName ? existingUser.displayName : displayName
+      }
     }
     userID = await createUserNotReq(externalUserID,appID,displayName)
-    return userID
+    return {
+      userID:userID,
+      displayName: displayName
+    }
   }
-  const getUserIDIfExistsInApp = async (userID:string,appID:string):Promise<string | null> => {
+  const getUserIDIfExistsInApp = async (userID:string,appID:string):Promise<{userID:string; displayName:string} | null> => {
     const { data, error } = await supabase
-    .from('user_app')
-    .select('user_id')
+    .from('app_user')
+    .select('user_id, users (display_name)')
     .eq('external_user_id', userID)
     .eq('app_id', appID)
+    .single()
     if (error){
         console.log(error)
         return null
     }
     else{
-        if (data.length === 0) {
-          return null
+        if (!data.user_id){
+          throw new Error("No user id found")
         }
-        if (data.length > 1) {
-          throw new Error("MORE THAN ONE User in the app found")
-        }
-        return data[0].user_id
+        const userID = data.user_id
+        const user = data.users as {display_name:string}
+        const displayName = user.display_name
+        return ({userID,displayName})
     }
 
   } 

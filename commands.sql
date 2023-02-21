@@ -55,7 +55,7 @@ CREATE TABLE company_developer (
     developer_owner_id UUID REFERENCES developers(id) on delete cascade
 );
 
-CREATE TABLE user_app (
+CREATE TABLE app_user (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     user_id UUID REFERENCES users(id) on delete cascade,
     app_id UUID REFERENCES apps(id) on delete cascade,
@@ -73,7 +73,7 @@ CREATE TABLE company_app (
     company_id UUID REFERENCES companies(id) on delete cascade,
     app_id UUID REFERENCES apps(id) on delete cascade
 );
-CREATE TABLE channel_app (
+CREATE TABLE app_channel (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     channel_id UUID REFERENCES channels(id) on delete cascade,
     app_id UUID REFERENCES apps(id) on delete cascade
@@ -91,19 +91,19 @@ CREATE TABLE api_key_developer (
     developer_id UUID REFERENCES developers(id) on delete cascade
 );
 
-CREATE TABLE user_channel (
+CREATE TABLE channel_user (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     user_id UUID REFERENCES users(id) on delete set null,
     channel_id UUID REFERENCES channels(id) on delete cascade
 );
 
-CREATE TABLE message_channel (
+CREATE TABLE channel_message (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     message_id UUID REFERENCES messages(id) on delete set null,
     channel_id UUID REFERENCES channels(id) on delete cascade
 );
 
-CREATE TABLE message_user (
+CREATE TABLE user_message (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     message_id UUID REFERENCES messages(id) on delete set null,
     user_id UUID REFERENCES users(id) on delete cascade

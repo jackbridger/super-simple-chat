@@ -12,7 +12,7 @@ import { extractDataFromJWT } from "../utils/auth";
 export const getAllChannels = async function (req: TypedRequestQuery<{user_id: string}>, res: Response) {
     // get all channels this user is attached to 
     const paticipatingChannelIds = await supabase
-        .from('user_channel')
+        .from('channel_user')
         .select('channel_id')
         .eq('user_id', req.query.user_id)
 
@@ -53,17 +53,18 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
 
     // if(!req.body.participant_ids.length) return res.sendStatus(400)
 
-    const data = extractDataFromJWT(req as Request)
+    const jwtData = extractDataFromJWT(req as Request)
 
-    if (!data) return res.status(401).json({message:"You are not authorized to create a channel"});
-    const {userID,appID} = data
+    if (!jwtData) return res.status(401).json({message:"You are not authorized to create a channel"});
+    const {userID,appID,externalUserID} = jwtData
 
     const {
       participant_ids:receievedParticipantIds,
       name,
     } = req.body;
 
-    const participantIDs = receievedParticipantIds ? [...new Set([userID,...receievedParticipantIds])] : [userID]
+    const participantIDs = receievedParticipantIds ? [...new Set([externalUserID,...receievedParticipantIds])] : [externalUserID]
+    console.log({participantIDs})
     // first create the channel 
     const channel = await addChannel(name,userID)
     if (!channel) return res.status(500).json({message:"There was an error creating the channel"})
@@ -72,10 +73,13 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
     const channelApp = await addChannelToApp(channelID, appID)
     
     if (!channelApp) return res.status(500).json({message:"There was an error adding the new channel to your app"})
-    
-    const participantsInChannel = await addParticipantsToChannel(channelID, participantIDs)
-    if (!participantsInChannel) return res.status(500).json({message:"There was an error adding your participants to the channel"})
-    else return res.send(channel)
+    try{
+        await addParticipantsToChannel(channelID, participantIDs,appID)
+        return res.send(channel)
+    }catch(err){
+        console.log(err)
+        return res.status(500).json({message:`There was an error adding your participants to the channel. ${err}`})
+    }
     // TO DO - bring this back without errors
     
     // const participants: User[] = [];
@@ -87,25 +91,28 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
     //      Socket.notifyUsersOnChannelCreate(participant_ids as string[], conv)
     //      return res.send(conv);
 }
-
-
 const addChannel = async function(name:string,userID:string) {
-    const channel = await supabase
-        .from('channels')
-        .upsert({ 
-        name: name,
-        owner_user_id:userID
-    })
+    try {
+        const channel = await supabase
+            .from('channels')
+            .upsert({ 
+                name: name,
+                owner_user_id:userID
+        })
         .select()
-
     if (channel.error) {
+        console.log(channel.error)
         return null
     }
     else return channel.data
+    }catch(err){
+        console.log(err)
+        return null
+    }
 }
 const addChannelToApp = async function(channelID:string, appID:string) {
     const channel = await supabase
-        .from('channel_app')
+        .from('app_channel')
         .upsert({ 
             channel_id: channelID,
             app_id: appID
@@ -113,33 +120,61 @@ const addChannelToApp = async function(channelID:string, appID:string) {
         .select()
 
     if (channel.error) {
+        console.log(channel.error)
         return null
     }
     else return channel.data
 }
-const addParticipantsToChannel = async function(channelID:string, participantIDs:string[]) {
 
+const getIDFromExternalID = async function(externalID:string,appID:string) {
+    // get the user id from supabase using  the external id
     try{
-        await participantIDs.map(async paricipantID => {
-            const {data,error} = await supabase
-            .from('user_channel')
-            .upsert({
-                user_id: paricipantID,
-                channel_id: channelID
-            })
-            .select()
-            if (error) {
-                console.log(error)
-                return false
-            }
-            if (data){
-                return true
+        const {data,error} = await supabase
+            .from('app_user')
+            .select('user_id')
+            .eq('external_user_id', externalID)
+            .eq('app_id', appID)
+            .single()
+        if (error) {
+
+            console.log(error)
+            return null
+        }
+        if (data){
+            return data.user_id
+        }
+    }catch(err){
+        console.log(err)
+        return null
+    }
+
+}
+
+const addParticipantsToChannel = async function(channelID:string, participantIDs:string[],appID:string): Promise<void> {
+    try{
+        participantIDs.forEach(async paricipantExternalID => {
+            const participantUserID = await getIDFromExternalID(paricipantExternalID,appID)
+            console.log({participantUserID})
+            if (!participantUserID) throw new Error("There was an error getting the user id from the external id")
+            try{
+                const {data,error} = await supabase
+                .from('channel_user')
+                .upsert({
+                    user_id: participantUserID,
+                    channel_id: channelID
+                })
+                .select()
+                if (error) {
+                    throw error
+                }
+
+            }catch(err){
+                throw err
             }
         })
 
     }catch(err){
-        console.log(err)
-        return false
+        throw err
     }
    
 }
@@ -183,12 +218,12 @@ export const getChannelByID = async function (req: TypedRequestQueryAndParams<{c
         .from('channels')
         .select(`
             name,
-            my_messages:message_channel(
+            my_messages:channel_message(
                 id,
                 messages:messages(
                     id,
                     message,
-                    who_sent:message_user(
+                    who_sent:user_message(
                         user_id:users(
                             username
                         )
@@ -267,7 +302,7 @@ const removeChannel = async function(channelID:string) {
 }
 const removeChannelMessage = async function(channelID:string) {
     const {error,data} = await supabase
-        .from('message_channel')
+        .from('channel_message')
         .delete()
         .eq('channel_id', channelID)
         .select()
@@ -280,7 +315,7 @@ const removeChannelMessage = async function(channelID:string) {
 }
 const removeChannelApp = async function(channelID:string) {
     const {error,data} = await supabase
-        .from('channel_app')
+        .from('app_channel')
         .delete()
         .eq('channel_id', channelID)
         .select()

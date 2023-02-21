@@ -108,7 +108,7 @@ const removeApp = async function(appID:string) {
 }
 const removeChannelApp = async function(appID:string) {
     const {error,data} = await supabase
-        .from('channel_app')
+        .from('app_channel')
         .delete()
         .eq('app_id', appID)
         .select()

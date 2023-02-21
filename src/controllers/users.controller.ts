@@ -42,7 +42,7 @@ const addUser = async function(displayName:string){
 }
 const addUserToApp = async function(userID:string,appID:string,externalUserID:string){
     const { data, error } = await supabase
-        .from('user_app')
+        .from('app_user')
         .upsert({ 
             user_id: userID,
             external_user_id: externalUserID,
@@ -56,15 +56,13 @@ const addUserToApp = async function(userID:string,appID:string,externalUserID:st
     }
 }
 
-// Create a new user_app entry
-// create user_app entry
 
 export const getAllUsers = async function (req: Request, res: Response) {
     const dataFromJWT = extractDataFromJWT(req as Request)
     if (!dataFromJWT) return res.sendStatus(401);
     const {appID} = dataFromJWT
     const { data, error } = await supabase
-    .from('user_app')
+    .from('app_user')
     .select(`users(*)`)
     .eq('app_id', appID)
 
@@ -168,7 +166,7 @@ const removeUser = async function(userID:string){
 const removeUserFromApp = async function(userID:string){
     try{
         const { data, error } = await supabase
-            .from('user_app')
+            .from('app_user')
             .delete()
             .eq('user_id', userID)
             .select()

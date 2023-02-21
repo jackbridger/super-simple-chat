@@ -78,7 +78,7 @@ export interface Database {
           updated_at?: string
         }
       }
-      channel_app: {
+      app_channel: {
         Row: {
           app_id: string | null
           channel_id: string | null
@@ -209,7 +209,7 @@ export interface Database {
           updated_at?: string
         }
       }
-      message_channel: {
+      channel_message: {
         Row: {
           channel_id: string | null
           id: string
@@ -226,7 +226,7 @@ export interface Database {
           message_id?: string | null
         }
       }
-      message_user: {
+      user_message: {
         Row: {
           id: string
           message_id: string | null
@@ -263,7 +263,7 @@ export interface Database {
           updated_at?: string
         }
       }
-      user_app: {
+      app_user: {
         Row: {
           app_id: string | null
           external_user_id: string
@@ -283,7 +283,7 @@ export interface Database {
           user_id?: string | null
         }
       }
-      user_channel: {
+      channel_user: {
         Row: {
           channel_id: string | null
           id: string

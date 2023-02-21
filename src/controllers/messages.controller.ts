@@ -31,7 +31,7 @@ export const sendMessageToChannel = async function (req: TypedRequestBody<{user_
 
     // get the users in this chat, except for the current one
     // const userChannelIds = await supabase
-    //     .from('user_channel')
+    //     .from('channel_user')
     //     .select('user_id')
     //     .eq('channel', channelID)
     // To Do: get this working again
@@ -71,7 +71,7 @@ const addMessage = async function (message:string) {
 const addMessageToUser = async function (messageID:string, userID:string) {
     try{
       const {error,data} = await supabase
-        .from('message_user')
+        .from('user_message')
         .upsert({ 
           message_id:messageID,
           user_id:userID
@@ -92,7 +92,7 @@ const addMessageToUser = async function (messageID:string, userID:string) {
 const addMessageToChannel = async function (messageID:string, channelID:string) {
   try{
     const {error,data} = await supabase
-      .from('message_channel')
+      .from('channel_message')
       .upsert({ 
         message_id:messageID,
         channel_id:channelID
@@ -119,7 +119,7 @@ export const getMessageByID = async function (req:TypedRequestQueryWithParams <{
 
   const { data, error } = await supabase
       .from('messages')
-      .select(`*, sender:message_user(username:users(username))`)
+      .select(`*, sender:user_message(username:users(username))`)
       .eq('id', messageID)
 
   if (error) {
@@ -173,7 +173,7 @@ export const deleteMessageByID = async function (req: TypedRequestQueryWithParam
 }
 const removeMessageUser = async function (messageID:string) { 
   const { data, error } = await supabase
-  .from('message_user')
+  .from('user_message')
   .delete()
   .eq('message_id', messageID) 
   .select()
@@ -186,7 +186,7 @@ const removeMessageUser = async function (messageID:string) {
 }
 const removeMessageChannel = async function (messageID:string) { 
   const { data, error } = await supabase
-  .from('message_channel')
+  .from('channel_message')
   .delete()
   .eq('message_id', messageID) 
   .select()
