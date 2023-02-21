@@ -1,3 +1,4 @@
+import util from 'util'
 import { Response, Request } from "express"
 import supabase from "../utils/supabase"
 import Socket from '../utils/socket';
@@ -5,7 +6,8 @@ import {
     TypedRequestBody, 
     TypedRequestQuery, 
     TypedRequestQueryAndParams,
-    TypedRequestQueryWithBodyAndParams
+    TypedRequestQueryWithBodyAndParams,
+    TypedRequestQueryWithParams
 } from '../types';
 import { extractDataFromJWT } from "../utils/auth";
 
@@ -208,52 +210,42 @@ export const getChannelMessages = async function (req: TypedRequestQueryAndParam
 
     res.send(messages.data)
 }
-// this feels a bit crap
-export const getChannelByID = async function (req: TypedRequestQueryAndParams<{channel_id: string} ,{last_message_date: Date}>, res: Response) {
-    // TODO - write this code
+export const getChannelByID = async function (req: TypedRequestQueryWithParams<{channel_id: string}>, res: Response) {
+    if(!req.params.channel_id) return res.status(400).json({message:"You must provide a channel id"})
     const { channel_id } = req.params;
-    const { last_message_date } = req.query;
     try {
         const {error,data} = await supabase
         .from('channels')
-        .select(`
-            name,
-            my_messages:channel_message(
-                id,
-                messages:messages(
-                    id,
-                    message,
-                    who_sent:user_message(
-                        user_id:users(
-                            username
-                        )
+        .select(`*, 
+                users(
+                    app_user(
+                        external_user_id
                     )
                 )
-            )
-        `)
-        // .order('created_at', { ascending: true })
+                `)
         .eq('id', channel_id)
-        // TO DO - add messages onto query
-        // if (last_message_date){
-        //     query = query.gt('created_at', last_message_date)
-        // }
+        .single()
 
         if (error){
             console.log(error)
             res.sendStatus(500)
         }
         else {
-            const transformedData = transformData(data)
-            res.send(transformedData)
+            if (!data) return res.status(404).json({message:"No channel found with that id"})
+            const rawUsers = data.users as {app_user:{external_user_id:string}[]}
+            const app_users = rawUsers ? rawUsers.app_user.map((user:{external_user_id:string}) => user.external_user_id) as string[] : []
+            const resData = {
+                id: data.id,
+                name: data.name,
+                owner_user_id: data.owner_user_id,
+                participants: app_users
+            }
+            return res.send(resData)
         }
-
-    // res.send(messages.data)
     }catch(err){
         console.log(err)
         res.sendStatus(500)
     }
-
-    
 }
 
 export const updateChannelByID = async function (req: TypedRequestQueryWithBodyAndParams<{channel_id: string} ,{name:string;owner_user_id:string}>, res: Response) {    
@@ -326,24 +318,3 @@ const removeChannelApp = async function(channelID:string) {
         return data
     }
 }
-
-
-
-function transformData(dataReceived: any[]): any {
-    const transformedData = dataReceived.map((group) => {
-      return group.my_messages.map((message:any) => {
-        return {
-          name: group.name,
-          id: message.id,
-          messages: message.messages.message,
-          username: message.messages.who_sent[0].user_id.username,
-        };
-      });
-    });
-  
-    // Flatten the transformed data into a single array
-    return [].concat.apply([], transformedData);
-  }
-
-
-//function to transform dataReceived into desiredFormat

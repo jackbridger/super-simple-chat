@@ -16,6 +16,7 @@ import {
 import {  getMessageByID, sendMessageToChannel } from "./controllers/messages.controller";
 import { createToken } from "./controllers/authentication.controller";
 import { secureClientRoutesWithJWTs } from "./utils/auth";
+import {getChannelMessagesByID} from "./controllers/messages.controller";
 
 const app = express();
 const server = http.createServer(app);
@@ -34,9 +35,10 @@ app.get("/", function (req:Request, res:Response) {
 
 // MVP endpoints
 app.post("/users/token",createToken); // ✅
-app.post("/channels", createChannel);  // ❌
-app.post("/messages", sendMessageToChannel) // ❌
-app.get("/channels/:channel_id", getChannelByID); //❌
+app.post("/channels", createChannel);  // ✅
+app.post("/messages", sendMessageToChannel) // ✅
+app.get("/channels/:channel_id", getChannelByID); //✅
+app.get("/channels/:channel_id/messages", getChannelMessagesByID) // ✅
 app.get("/channels", getAllChannels) //❌
 app.get("/users", getAllUsers); // ❌
 app.get("/users/:user_id", getUserByID); //  ❌

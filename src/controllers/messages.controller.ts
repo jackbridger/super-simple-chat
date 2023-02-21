@@ -1,4 +1,4 @@
-import { Response } from "express"
+import { Response,Request } from "express"
 import supabase from "../utils/supabase"
 import Socket from '../utils/socket';
 import { 
@@ -8,20 +8,43 @@ import {
     TypedRequestQuery,
     TypedRequestQueryWithBodyAndParams
 } from '../types';
+import { extractDataFromJWT } from "../utils/auth";
 
 
-export const sendMessageToChannel = async function (req: TypedRequestBody<{user_id: string, message: string,channel_id:string}>, res: Response) {
-    const {
-      channel_id,
-      user_id,
-      message,
-    } = req.body;
+export const sendMessageToChannel = async function (req: TypedRequestBody<{message: string,channel_id:string}>, res: Response) {
+  if (!req.body) {
+    return res.status(400).json({
+        message:"No body. Please provide a 'channel_id' - a unique id for the channel and  also message - the message you want to send."
+    })
+  }
+  if (!req.body.channel_id && !req.body.message){
+    return res.status(400).json({
+        message:"Please provide a 'channel_id' and 'message' in the body of your request. channel_id is the public name of the channel you are creating. message is the message you are sending"
+    })
+  }
+  if (!req.body.channel_id){ 
+      return res.status(400).json({
+      message:"Please provide a 'channel_id' in the body of your request. channel_id is the public name of the channel you are creating."
+  })}
+  if (!req.body.message){ 
+      return res.status(400).json({
+      message:"Please provide a 'message' in the body of your request. message is the message you are sending"
+  })}
+  
+    const channelID = req.body.channel_id
+    const message = req.body.message
+
+    const dataFromJWT = extractDataFromJWT(req as Request)
+    if (!dataFromJWT) {
+        return res.sendStatus(401)
+    }
+    const {userID}= dataFromJWT
 
     const messageID = await addMessage(message)
     if (!messageID){return res.sendStatus(500)}
-    const messageUserID = await addMessageToUser(messageID,user_id)
+    const messageUserID = await addMessageToUser(messageID,userID)
     if (!messageUserID){return res.sendStatus(500)}
-    const messageChannelID = await addMessageToChannel(messageID,channel_id)
+    const messageChannelID = await addMessageToChannel(messageID,channelID)
     if (!messageChannelID) {return res.sendStatus(500)}
     return res.send(messageID)
     // add message to user
@@ -209,5 +232,37 @@ const removeMessage = async function (messageID:string) {
     return null
   } else {
     return data[0]
+  }
+}
+
+export const getChannelMessagesByID = async function (req: TypedRequestQueryWithParams<{channel_id: string}>, res: Response) {
+  if(!req.params.channel_id) return res.status(400).json({message:"You must provide a channel id"})
+  const { channel_id } = req.params;
+  try {
+      const {error,data} = await supabase
+      .from('channel_message')
+      .select(`messages(id, message, created_at,updated_at,user_message(users(display_name,app_user(external_user_id) )) ) )`)
+      .eq('channel_id', channel_id)
+      if (error){
+          console.log(error)
+          res.sendStatus(500)
+      }
+      else {
+          if (!data) return res.status(404).json({message:"No channel found with that id"})
+          const newData = data as any;
+          const messages = newData.map((message:any) => message.messages) as any[]
+          const formattedMessages = messages.map((message:any) => ({
+            id: message.id,
+            message: message.message,
+            created_at: message.created_at,
+            updated_at: message.updated_at,
+            user_id: message.user_message[0].users.app_user[0].external_user_id
+          } ))
+
+          return res.send(formattedMessages)
+      }
+  }catch(err){
+      console.log(err)
+      res.sendStatus(500)
   }
 }
