@@ -63,13 +63,19 @@ export const getAllUsers = async function (req: Request, res: Response) {
     const {appID} = dataFromJWT
     const { data, error } = await supabase
     .from('app_user')
-    .select(`users(*)`)
+    .select(`users(display_name),external_user_id)`)
     .eq('app_id', appID)
 
     if (error) {
         return res.sendStatus(500)
     } else {
-        return res.send(data)
+        const newData = data.map((item:any) => {
+            return {
+                display_name: item.users.display_name,
+                id: item.external_user_id
+            }
+        })
+        return res.send(newData)
     }
 }
 export const getUserByID = async function (req: TypedRequestQueryWithParams<{user_id: string}>, res: Response) {

@@ -39,10 +39,7 @@ app.post("/channels", createChannel);  // ✅
 app.post("/messages", sendMessageToChannel) // ✅
 app.get("/channels/:channel_id", getChannelByID); //✅
 app.get("/channels/:channel_id/messages", getChannelMessagesByID) // ✅
-app.get("/channels", getAllChannels) //❌
-app.get("/users", getAllUsers); // ❌
-app.get("/users/:user_id", getUserByID); //  ❌
-app.get("/messages/:message_id",getMessageByID); //❌
-app.get("/channels/:channel_id/messages", getMessagesInAChannel) // ❌
+app.get("/channels", getAllChannels) //✅
+app.get("/users", getAllUsers); // ✅
 
 server.listen(process.env.PORT || 3001);

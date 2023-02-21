@@ -4,40 +4,30 @@ import supabase from "../utils/supabase"
 import Socket from '../utils/socket';
 import { 
     TypedRequestBody, 
-    TypedRequestQuery, 
     TypedRequestQueryAndParams,
     TypedRequestQueryWithBodyAndParams,
     TypedRequestQueryWithParams
 } from '../types';
 import { extractDataFromJWT } from "../utils/auth";
 
-export const getAllChannels = async function (req: TypedRequestQuery<{user_id: string}>, res: Response) {
-    // get all channels this user is attached to 
+export const getAllChannels = async function (req: Request, res: Response) {
+    const jwtData = extractDataFromJWT(req as Request)
+    if (!jwtData) return res.status(401).json({message:"You are not authorized to get channels"});
+    const {userID} = jwtData
+
     const paticipatingChannelIds = await supabase
         .from('channel_user')
         .select('channel_id')
-        .eq('user_id', req.query.user_id)
-
+        .eq('user_id', userID)
+    
     if (!paticipatingChannelIds.data?.length) {
         return res.send([]);
     }
 
     const channels = await supabase
-        .from('channels')
-        .select(`
-            *, 
-            messages (
-                id,
-                channel_id,
-                message,
-                created_at,
-                users (
-                    id,
-                    username
-                )
-            )
-        `)
-        .or(`owner_user_id.eq.${req.query.user_id},or(id.in.(${paticipatingChannelIds.data.map((item: any) => item.channel_id)}))`)
+        .from('channel_user')
+        .select(`channels(*)`)
+        .eq('user_id', userID)
 
     return res.send(channels.data)
 }
