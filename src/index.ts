@@ -4,7 +4,7 @@ import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 
-import { createUser, searchUsers, getAllUsers, getUserByID, updateCurrentUser, deleteUserByID, connectUser, deleteCurrentUser } from './controllers/users.controller';
+import { searchUsers, getAllUsers, getUserByID, updateCurrentUser, deleteUserByID, deleteCurrentUser } from './controllers/users.controller';
 import Socket from "./utils/socket";
 
 import { 
@@ -16,7 +16,8 @@ import {
   updateChannelByID
 } from './controllers/channels.controller';
 import { deleteMessageByID, getMessageByID, sendMessageToChannel, updateMessageByID } from "./controllers/messages.controller";
-import { getServerAPIKey,getChatToken } from "./controllers/authentication.controller";
+import { getServerAPIKey } from "./controllers/authentication.controller";
+import { createToken } from "./controllers/authentication.controller";
 import { secureClientRoutesWithJWTs } from "./utils/auth";
 import { createNewApp,deleteAppByID } from "./controllers/apps.controller";
 import { createNewCompany } from "./controllers/companies.controller";
@@ -42,12 +43,13 @@ app.get("/", function (req:Request, res:Response) {
 app.post("/developers", createDeveloper) // done
 
 // AUTHENTICATION ENDPOINTS
-app.get("/get-server-api-key", getServerAPIKey); // done 
-app.get("/get-chat-token",getChatToken);   // done (with some checks needed)
+
+
+app.post("/users/token",createToken); // done (with some checks needed)
 
 // USER ENDPOINTS
+// app.post("/users", createUser); // working
 app.get("/users", getAllUsers); // Think its working 
-app.post("/users", createUser); // working
 app.put("/users", updateCurrentUser ); // working
 app.get("/users/:user_id", getUserByID); //  working
 app.delete("/users", deleteCurrentUser); // working (need to double check though)
@@ -80,8 +82,11 @@ app.delete("/apps/:app_id", deleteAppByID); // need to do
 app.post("/companies", createNewCompany); // done
 
 // Unclear parts
-app.post("/users/connect", connectUser);
+// app.post("/users/connect", connectUser);
 app.get("/users/search?q=:query", searchUsers);
+
+// Removed/moved
+// app.get("/get-server-api-key", getServerAPIKey); // done 
 
 
 server.listen(process.env.PORT || 3001);

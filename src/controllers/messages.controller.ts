@@ -19,13 +19,10 @@ export const sendMessageToChannel = async function (req: TypedRequestBody<{user_
 
     const messageID = await addMessage(message)
     if (!messageID){return res.sendStatus(500)}
-    console.log(messageID)
     const messageUserID = await addMessageToUser(messageID,user_id)
-    console.log(messageUserID)
     if (!messageUserID){return res.sendStatus(500)}
-    console.log({channel_id})
     const messageChannelID = await addMessageToChannel(messageID,channel_id)
-    console.log(messageChannelID)
+    if (!messageChannelID) {return res.sendStatus(500)}
     return res.send(messageID)
     // add message to user
     // add message to channel
@@ -65,7 +62,6 @@ const addMessage = async function (message:string) {
         console.log(error)
         return null
       }
-      console.log(data)
       return data[0].id
   }catch(err){
     console.log(err)
@@ -87,7 +83,6 @@ const addMessageToUser = async function (messageID:string, userID:string) {
           console.log(error)
           return null
         }
-        console.log(data)
         return data[0].id
     }catch(err){
       console.log(err)
@@ -109,7 +104,6 @@ const addMessageToChannel = async function (messageID:string, channelID:string) 
         console.log(error)
         return null
       }
-      console.log(data)
       return data[0].id
   }catch(err){
     console.log(err)
@@ -187,7 +181,6 @@ const removeMessageUser = async function (messageID:string) {
     console.log(error)
     return null
   } else {
-    console.log(data)
     return data[0]
   }
 }
@@ -201,8 +194,6 @@ const removeMessageChannel = async function (messageID:string) {
     console.log(error)
     return null
   } else {
-    console.log("success")
-    console.log(data)
     return data[0]
   }
 }
@@ -217,8 +208,6 @@ const removeMessage = async function (messageID:string) {
     console.log(error)
     return null
   } else {
-    console.log("success")
-    console.log(data)
     return data[0]
   }
 }

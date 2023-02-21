@@ -7,14 +7,11 @@ import supabase from "../utils/supabase"
 export const createNewCompany = async (req:TypedRequestBody<{name:string,developer_id:string}>, res:Response) => {
     const name = req.body.name
     const developerID = req.body.developer_id
-    console.log({developerID})
-    console.log({name})
     // create new app in supabase
     const companyID = await addCompany(name,developerID)
     if (!companyID) {
         return res.sendStatus(500)
     }
-    console.log({companyID})
     const companyDeveloper = await addCompanyDeveloper(companyID,developerID)
     if (!companyDeveloper) {
         return res.sendStatus(500)
@@ -53,7 +50,7 @@ const addCompanyDeveloper = async (companyID:string,developerID:string) => {
          })
         .select()
         if (error) {
-            console.log({error})
+            console.log(error)
             return null
         } else {
             return data[0].id

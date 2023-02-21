@@ -27,7 +27,6 @@ function verifyToken(token:string) {
   
   }
 
-
 export function extractDataFromJWT (req:Request) {
   if (!req.headers.authorization) throw new Error("No JWT found")
   const token = req.headers.authorization.split(' ')[1]
@@ -42,12 +41,10 @@ export function extractDataFromJWT (req:Request) {
 
 export const secureClientRoutesWithJWTs = async (req:Request, res:Response, next:NextFunction) =>{
   // TO DO  - need to make sure these routes are secure
-  const nonSecureRoutes = ['/get-chat-token','/get-server-api-key',"/apps","/companies","/developers"]
+  const nonSecureRoutes = ['/get-server-api-key',"/apps","/companies","/developers"]
   if (req.path === "/" && req.method === "GET"){
     return next()
   }
-
-  console.log(req.path.split("/"))
   const initialPath = req.path.split("/")[1]
   if (initialPath === "apps" && req.method === "DELETE"){
     return next()
@@ -56,6 +53,9 @@ export const secureClientRoutesWithJWTs = async (req:Request, res:Response, next
   if (req.path === "/users" && req.method === "POST"){
     return next()
   }   
+  if (req.path === "/users/token" && req.method === "POST"){
+    return next()
+  }
   
   if (nonSecureRoutes.includes(req.path)){
       return next()
@@ -102,7 +102,6 @@ const addAPIKey = async function(newKey:string):Promise<string|null>{
         return null
     }
     else{
-        console.log(data)
         return data[0].id
     }
 }catch(err){
@@ -121,7 +120,6 @@ const linkAPIKeyToDeveloper = async function(apiKeyID:string,developerID:string)
         return null
     }
     else{
-        console.log(data)
         return data[0].id
     }
 }catch(err){
@@ -141,7 +139,6 @@ const linkAPIKeyToApp = async function(apiKeyID:string,appID:string):Promise<str
         return null
     }
     else{
-        console.log(data)
         return data[0].id
     }
 }catch(err){

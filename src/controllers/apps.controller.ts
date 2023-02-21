@@ -103,7 +103,6 @@ const removeApp = async function(appID:string) {
         console.log(error)
         return null
     }else {
-        console.log({data})
         return data
     }
 }
@@ -117,7 +116,6 @@ const removeChannelApp = async function(appID:string) {
         console.log(error)
         return null
     }else {
-        console.log({data})
         return data
     }
 }
@@ -131,7 +129,6 @@ const removeCompanyApp = async function(appID:string) {
         console.log(error)
         return null
     }else {
-        console.log({data})
         return data
     }
 }
@@ -145,7 +142,6 @@ const removeDeveloperApp = async function(appID:string) {
         console.log(error)
         return null
     }else {
-        console.log({data})
         return data
     }
 }

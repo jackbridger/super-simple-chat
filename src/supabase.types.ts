@@ -1,11 +1,3 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json }
-  | Json[]
-
 export interface Database {
   public: {
     Tables: {
@@ -200,54 +192,54 @@ export interface Database {
       developers: {
         Row: {
           created_at: string
+          display_name: string
           id: string
           updated_at: string
-          username: string
         }
         Insert: {
           created_at?: string
+          display_name: string
           id?: string
           updated_at?: string
-          username: string
         }
         Update: {
           created_at?: string
+          display_name?: string
           id?: string
           updated_at?: string
-          username?: string
         }
       }
       message_channel: {
         Row: {
           channel_id: string | null
           id: string
-          message: string | null
+          message_id: string | null
         }
         Insert: {
           channel_id?: string | null
           id?: string
-          message?: string | null
+          message_id?: string | null
         }
         Update: {
           channel_id?: string | null
           id?: string
-          message?: string | null
+          message_id?: string | null
         }
       }
       message_user: {
         Row: {
           id: string
-          message: string | null
+          message_id: string | null
           user_id: string | null
         }
         Insert: {
           id?: string
-          message?: string | null
+          message_id?: string | null
           user_id?: string | null
         }
         Update: {
           id?: string
-          message?: string | null
+          message_id?: string | null
           user_id?: string | null
         }
       }
@@ -274,16 +266,19 @@ export interface Database {
       user_app: {
         Row: {
           app_id: string | null
+          external_user_id: string
           id: string
           user_id: string | null
         }
         Insert: {
           app_id?: string | null
+          external_user_id: string
           id?: string
           user_id?: string | null
         }
         Update: {
           app_id?: string | null
+          external_user_id?: string
           id?: string
           user_id?: string | null
         }
@@ -308,21 +303,21 @@ export interface Database {
       users: {
         Row: {
           created_at: string
+          display_name: string
           id: string
           updated_at: string
-          username: string
         }
         Insert: {
           created_at?: string
+          display_name: string
           id?: string
           updated_at?: string
-          username: string
         }
         Update: {
           created_at?: string
+          display_name?: string
           id?: string
           updated_at?: string
-          username?: string
         }
       }
     }
@@ -333,7 +328,16 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      pricing_plan_interval: "month" | "year"
+      pricing_type: "one_time" | "recurring"
+      subscription_status:
+        | "trialing"
+        | "active"
+        | "canceled"
+        | "incomplete"
+        | "incomplete_expired"
+        | "past_due"
+        | "unpaid"
     }
     CompositeTypes: {
       [_ in never]: never

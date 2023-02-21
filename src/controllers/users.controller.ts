@@ -3,20 +3,35 @@ import supabase from "../utils/supabase"
 import { TypedRequestBody, TypedRequestQuery, TypedRequestQueryWithParams } from "../types"
 import { extractDataFromJWT } from "../utils/auth"
 
-export const createUser = async function (req: TypedRequestBody<{username: string;app_id:string}>, res: Response) {
-    // TO DO - need app ID from JWT
+// export const createUser = async function (req: TypedRequestBody<{username: string;app_id:string}>, res: Response) {
+//     const dataFromJWT = extractDataFromJWT(req as Request)
+//     if (!dataFromJWT) return res.sendStatus(401);
+//     const {appID} = dataFromJWT
+
+//     const userID = await addUser(req.body.username)
+//     if (!userID) return res.sendStatus(500)
+//     const appUserID = await addUserToApp(userID,appID)
+//     if (!appUserID) return res.sendStatus(500)
+//     return res.send(userID)
+// }
+export const createUserNotReq = async function (externalUserID: string,appID:string, displayName:string) {
     
-    const userID = await addUser(req.body.username)
-    if (!userID) return res.sendStatus(500)
-    const appUserID = await addUserToApp(userID,req.body.app_id)
-    if (!appUserID) return res.sendStatus(500)
-    return res.send(userID)
+    const userID = await addUser(displayName)
+    if (!userID) {
+        throw new Error("Could not create user")
+    }
+    const appUserID = await addUserToApp(userID,appID,externalUserID)
+    if (!appUserID) {
+        throw new Error("Could not create user")
+    }
+    return userID
 }
-const addUser = async function(username:string){
+
+const addUser = async function(displayName:string){
     const { data, error } = await supabase
         .from('users')
         .upsert({ 
-            username: username,
+            display_name: displayName
         })
         .select()
     if (error) {
@@ -25,11 +40,12 @@ const addUser = async function(username:string){
         return data[0].id
     }
 }
-const addUserToApp = async function(userID:string,appID:string){
+const addUserToApp = async function(userID:string,appID:string,externalUserID:string){
     const { data, error } = await supabase
         .from('user_app')
         .upsert({ 
             user_id: userID,
+            external_user_id: externalUserID,
             app_id: appID
         })
         .select()
@@ -45,7 +61,6 @@ const addUserToApp = async function(userID:string,appID:string){
 
 export const getAllUsers = async function (req: Request, res: Response) {
     const dataFromJWT = extractDataFromJWT(req as Request)
-    console.log(dataFromJWT)
     if (!dataFromJWT) return res.sendStatus(401);
     const {appID} = dataFromJWT
     const { data, error } = await supabase
@@ -71,20 +86,20 @@ export const getUserByID = async function (req: TypedRequestQueryWithParams<{use
         res.send(data[0])
     }
 }
-export const updateCurrentUser = async function (req: TypedRequestBody<{new_username: string}>, res: Response) {
+export const updateCurrentUser = async function (req: TypedRequestBody<{display_name: string}>, res: Response) {
     // Note these are for updating the current user
     // If we want to update a user by ID, we need an admin route
     const dataFromJWT = extractDataFromJWT(req as Request)
     if (!dataFromJWT) return res.sendStatus(401);
     const {userID} = dataFromJWT
 
-    const newUsername = req.body.new_username
+    const newDisplayName = req.body.display_name
 
     try {
         const { data, error } = await supabase
         .from('users')
         .update({
-            username: newUsername
+            display_name: newDisplayName
         })
         .eq('id', userID)
         .select()
@@ -93,7 +108,6 @@ export const updateCurrentUser = async function (req: TypedRequestBody<{new_user
         console.log(error)
         return res.sendStatus(400)
     } else {
-        console.log(data)
 
         return res.sendStatus(200)
     }
@@ -104,10 +118,8 @@ export const updateCurrentUser = async function (req: TypedRequestBody<{new_user
   
 }
 export const deleteUserByID = async function (req: TypedRequestQueryWithParams<{user_id: string}>, res: Response) {
-    console.log("came in to delete")
-    console.log(req.params)
     const userID = req.params.user_id
-    console.log({userID})
+
     try{
         const { data, error } = await supabase
             .from('users')
@@ -164,7 +176,6 @@ const removeUserFromApp = async function(userID:string){
             console.log(error)
             return null
         } else {
-            console.log(data)
             return data[0]
         }
         }catch(err){
@@ -198,19 +209,19 @@ export const searchUsers =   async function (req: TypedRequestQuery<{user_id: st
     }
 }
 
-export const connectUser = async function (req: TypedRequestBody<{username: string}>, res: Response) {
-    // TODO - write this code
-    const { data, error } = await supabase
-        .from('users')
-        .upsert({ 
-            username: req.body.username,
-            created_at: ((new Date()).toISOString()).toLocaleString()
-        })
-        .select()
+// export const connectUser = async function (req: TypedRequestBody<{username: string}>, res: Response) {
+//     // TODO - write this code
+//     const { data, error } = await supabase
+//         .from('users')
+//         .upsert({ 
+//             username: req.body.username,
+//             created_at: ((new Date()).toISOString()).toLocaleString()
+//         })
+//         .select()
 
-    if (error) {
-        return res.sendStatus(500)
-    } else {
-        return res.send(data[0])
-    }
-}
+//     if (error) {
+//         return res.sendStatus(500)
+//     } else {
+//         return res.send(data[0])
+//     }
+// }

@@ -4,17 +4,20 @@ import {
     TypedRequestBody, 
 } from '../types';
 import { newAPIKey,isValidAPIKey } from "../utils/auth";
+import { createUserNotReq } from "./users.controller";
 import supabase from "../utils/supabase";
 
 export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:Response) => {
-    // Get that from Supabase Auth
+   // 
+  
+  // Get that from Supabase Auth
   const devID = "2a81bd96-7abc-46ea-91b2-e47d7f8f9d0c"
     // CompanyID should come from the users auth id?
     const companyID = "d17f074e-baa9-4391-b24e-0c41f7944553"
     const appID = req.body.appID
 
     if (!devID){
-      return res.status(400).json({ error: 'No username!' });
+      return res.status(400).json({ error: 'No no dev id!' });
     }
     if (!appID){
       return res.status(400).json({ error: 'No appID!' });
@@ -33,7 +36,6 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
 
   async function getCompanyIDFromAppID (appID:string) {
     try{
-      console.log("looking up ",appID)
       const { data, error } = await supabase
       .from('company_app')
       .select('company_id')
@@ -58,26 +60,27 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
   }
   }
 
-  export const getChatToken = async (req: Request, res: Response) => {
+  export const createToken = async (req: Request, res: Response) => {
+    // Registers the user if they don't exist or connects them if they do 
     const jwtKey = process.env.SECRET_JWT_KEY
     if (!req.headers.authorization) {
       return res.status(403).json({ error: 'No server key sent!' });
     }
     if (!jwtKey) throw new Error("No JWT key found")
     // Developer provides this:
-    // This is not the developer user, but the end user's username
-    const userID = req.body.user_id
+    // This is not the developer user, but the end user's user ID
+    const externalUserID = req.body.user_id
     // They send along app ID
     const appID = req.body.app_id
+    const displayName = req.body.display_name ?? ""
 
     const companyID = await getCompanyIDFromAppID(appID)
-    console.log(companyID)
 
-    if (!userID){
-      return res.status(403).json({error:"No username"})
+    if (!externalUserID){
+      return res.status(403).json({error:"No user ID provided"})
     }
     if (!appID){
-      return res.status(403).json({error:"No app ID"})
+      return res.status(403).json({error:"No app ID provided"})
     }
     if (!companyID){
       return res.status(403).json({error:"No team"})
@@ -89,11 +92,45 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
     if (!isValid){
       return res.status(400).json({ error: 'Invalid API key' });
     }
+
+    const userID = await checkIfUserExistsOrCreate(externalUserID,appID,displayName)
   
-    const claims = { userID,companyID,appID }
+    const claims = { userID,externalUserID: externalUserID,companyID,appID }
     // To do - make async?
     const token = jwt.sign(claims, jwtKey,{
       expiresIn:60000 // TO DO - need to make this longer & revokable and renewable
     })
     return res.send(token)
   }
+
+
+  const checkIfUserExistsOrCreate = async (externalUserID:string,appID:string, displayName:string):Promise<string> => {
+    let userID = null
+    userID = await getUserIDIfExistsInApp(externalUserID,appID)
+    if (userID) {
+      return userID
+    }
+    userID = await createUserNotReq(externalUserID,appID,displayName)
+    return userID
+  }
+  const getUserIDIfExistsInApp = async (userID:string,appID:string):Promise<string | null> => {
+    const { data, error } = await supabase
+    .from('user_app')
+    .select('user_id')
+    .eq('external_user_id', userID)
+    .eq('app_id', appID)
+    if (error){
+        console.log(error)
+        return null
+    }
+    else{
+        if (data.length === 0) {
+          return null
+        }
+        if (data.length > 1) {
+          throw new Error("MORE THAN ONE User in the app found")
+        }
+        return data[0].user_id
+    }
+
+  } 

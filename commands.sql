@@ -22,7 +22,7 @@ CREATE TABLE api_keys (
 
 CREATE TABLE users (
     id UUID PRIMARY KEY default uuid_generate_v4(),
-    username VARCHAR(255) NOT NULL,
+    display_name VARCHAR(255) NOT NULL,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -42,12 +42,26 @@ CREATE TABLE messages (
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+CREATE TABLE developers (
+    id UUID PRIMARY KEY default uuid_generate_v4(),
+    display_name VARCHAR(255) NOT NULL,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 CREATE TABLE company_developer (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     company_id UUID REFERENCES companies(id) on delete cascade,
     developer_owner_id UUID REFERENCES developers(id) on delete cascade
 );
 
+CREATE TABLE user_app (
+    id UUID PRIMARY KEY default uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) on delete cascade,
+    app_id UUID REFERENCES apps(id) on delete cascade,
+    external_user_id VARCHAR(255) NOT NULL,
+    unique(app_id, external_user_id)
+);
 CREATE TABLE developer_app (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     developer_id UUID REFERENCES developers(id) on delete cascade,
@@ -75,12 +89,6 @@ CREATE TABLE api_key_developer (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     api_key_id UUID REFERENCES api_keys(id) on delete set null,
     developer_id UUID REFERENCES developers(id) on delete cascade
-);
-
-CREATE TABLE user_app (
-    id UUID PRIMARY KEY default uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) on delete set null,
-    app_id UUID REFERENCES apps(id) on delete cascade
 );
 
 CREATE TABLE user_channel (

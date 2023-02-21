@@ -2,23 +2,23 @@ import { Response } from "express"
 import supabase from "../utils/supabase"
 import { TypedRequestBody } from "../types"
 
-export const createDeveloper = async function (req: TypedRequestBody<{username: string}>, res: Response) {
-    const username = req.body.username
-    const devID = await addDeveloper(username)
+export const createDeveloper = async function (req: TypedRequestBody<{display_name: string}>, res: Response) {
+    const displayName = req.body.display_name
+    const devID = await addDeveloper(displayName)
     if(!devID) return res.sendStatus(500)
-    const companyID = await addCompany(username)
+    const companyID = await addCompany(displayName)
     if(!companyID) return res.sendStatus(500)
     const companyDeveloperID = await addCompanyDeveloper(companyID,devID)
     if(!companyDeveloperID) return res.sendStatus(500)
     return res.send(devID)
 }
 
-async function addDeveloper(username:string):Promise<string | null>{
+async function addDeveloper(displayName:string):Promise<string | null>{
     try{
         const { data, error } = await supabase
         .from('developers')
         .upsert({ 
-            username:username
+            display_name:displayName
         })
         .select()
         if (error) {
@@ -33,12 +33,12 @@ async function addDeveloper(username:string):Promise<string | null>{
         return null
     }
 }
-async function addCompany(username:string):Promise<string | null>{
+async function addCompany(displayName:string):Promise<string | null>{
     try{
         const { data, error } = await supabase
         .from('companies')
         .upsert({ 
-            name:`${username} Co`
+            name:`${displayName} Co`
         })
         .select()
         if (error) {

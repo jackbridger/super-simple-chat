@@ -7,7 +7,10 @@
     "dev": "nodemon -r dotenv/config src/index.ts",
     "start": "ts-node -r dotenv/config src/index.ts",
     "lint": "eslint . --fix",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "new-types": "npx supabase gen types typescript --project-id 'qrxgxdvbilytagyequng' --schema public > src/supabase.types.ts"
+
+
   },
   "repository": {
     "type": "git",

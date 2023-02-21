@@ -40,32 +40,41 @@ export const getAllChannels = async function (req: TypedRequestQuery<{user_id: s
     return res.send(channels.data)
 }
 
-export const createChannel = async function (req: TypedRequestBody<{participant_ids: string[], group_name: string}>, res: Response) {
-    
-    if (!req.body) return res.sendStatus(400)
-    if (!req.body.participant_ids || !req.body.group_name) return res.sendStatus(400)
-    if(!req.body.participant_ids.length) return res.sendStatus(400)
+export const createChannel = async function (req: TypedRequestBody<{participant_ids: string[], name: string}>, res: Response) {
+    if (!req.body) {
+        return res.status(400).json({
+            message:"No body. Please provide a 'name' - the public name of the channel and optionally 'participant_ids' with the id of users in the channel"
+        })
+    }
+    if (!req.body.name){ 
+        return res.status(400).json({
+        message:"Please provide a 'name' in the body of your request. Name is the public name of the channel you are creating."
+    })}
+
+    // if(!req.body.participant_ids.length) return res.sendStatus(400)
 
     const data = extractDataFromJWT(req as Request)
-    console.log(data)
 
-    if (!data) return res.sendStatus(401);
+    if (!data) return res.status(401).json({message:"You are not authorized to create a channel"});
     const {userID,appID} = data
+
     const {
-      participant_ids,
-      group_name,
+      participant_ids:receievedParticipantIds,
+      name,
     } = req.body;
 
+    const participantIDs = receievedParticipantIds ? [...new Set([userID,...receievedParticipantIds])] : [userID]
     // first create the channel 
-    const channel = await addChannel(group_name,userID)
-    if (!channel) return res.sendStatus(500)
+    const channel = await addChannel(name,userID)
+    if (!channel) return res.status(500).json({message:"There was an error creating the channel"})
+
     const channelID = channel[0].id
     const channelApp = await addChannelToApp(channelID, appID)
     
-    if (!channelApp) return res.sendStatus(500)
+    if (!channelApp) return res.status(500).json({message:"There was an error adding the new channel to your app"})
     
-    const participantsInChannel = await addParticipantsToChannel(channelID, participant_ids)
-    if (!participantsInChannel) return res.sendStatus(500)
+    const participantsInChannel = await addParticipantsToChannel(channelID, participantIDs)
+    if (!participantsInChannel) return res.status(500).json({message:"There was an error adding your participants to the channel"})
     else return res.send(channel)
     // TO DO - bring this back without errors
     
@@ -78,6 +87,7 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
     //      Socket.notifyUsersOnChannelCreate(participant_ids as string[], conv)
     //      return res.send(conv);
 }
+
 
 const addChannel = async function(name:string,userID:string) {
     const channel = await supabase
@@ -111,7 +121,6 @@ const addParticipantsToChannel = async function(channelID:string, participantIDs
 
     try{
         await participantIDs.map(async paricipantID => {
-            console.log({paricipantID})
             const {data,error} = await supabase
             .from('user_channel')
             .upsert({
@@ -167,7 +176,6 @@ export const getChannelMessages = async function (req: TypedRequestQueryAndParam
 // this feels a bit crap
 export const getChannelByID = async function (req: TypedRequestQueryAndParams<{channel_id: string} ,{last_message_date: Date}>, res: Response) {
     // TODO - write this code
-    console.log('get channel by id')
     const { channel_id } = req.params;
     const { last_message_date } = req.query;
     try {
@@ -200,9 +208,7 @@ export const getChannelByID = async function (req: TypedRequestQueryAndParams<{c
             res.sendStatus(500)
         }
         else {
-            console.log(data)
             const transformedData = transformData(data)
-            console.log(transformedData)
             res.send(transformedData)
         }
 
@@ -227,7 +233,6 @@ export const updateChannelByID = async function (req: TypedRequestQueryWithBodyA
         console.log(error)
         res.sendStatus(500)
     }else {
-        console.log({data})
         res.send(data)
     }
 
@@ -241,10 +246,8 @@ export const deleteChannelByID = async function (req: TypedRequestQueryAndParams
     if (!deletedChannelMessages) return res.sendStatus(500)
     if (deletedChannelMessages.length === 0){res.status(500).send("No matching channels");}
     const deletedChannelApp = await removeChannelApp(channelID)
-    console.log({deletedChannelApp})
     if (!deletedChannelApp) return res.sendStatus(500)
     const deletedChannel = await removeChannel(channelID)
-    console.log({deletedChannel})
     if (!deletedChannel) return res.sendStatus(500)
     return res.send(deletedChannel)
 }
@@ -259,7 +262,6 @@ const removeChannel = async function(channelID:string) {
         console.log(error)
         return null
     }else {
-        console.log({data})
         return data
     }
 }
@@ -273,7 +275,6 @@ const removeChannelMessage = async function(channelID:string) {
         console.log(error)
         return null
     }else {
-        console.log({data})
         return data
     }
 }
@@ -287,7 +288,6 @@ const removeChannelApp = async function(channelID:string) {
         console.log(error)
         return null
     }else {
-        console.log({data})
         return data
     }
 }
