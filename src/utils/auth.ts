@@ -30,7 +30,7 @@ function verifyToken(token:string) {
   
   }
 
-export function extractDataFromJWT (req:Request) {
+export function extractDataFromRequestWithJWT (req:Request) {
   if (!req.headers.authorization) throw new Error("No JWT found")
   const token = req.headers.authorization.split(' ')[1]
   const jwtKey = process.env.SECRET_JWT_KEY
@@ -38,6 +38,14 @@ export function extractDataFromJWT (req:Request) {
   if (!token) return false
 
 
+  const {userID,companyID,appID, externalUserID} =  jwt.verify(token,jwtKey) as UserPayLoad
+  return ({userID,companyID,appID,externalUserID})
+}
+
+export function extractDataFromJWT (token:string) {
+  if(!token) throw new Error("No JWT found")
+  const jwtKey = process.env.SECRET_JWT_KEY
+  if (!jwtKey) throw new Error("No JWT key found")
   const {userID,companyID,appID, externalUserID} =  jwt.verify(token,jwtKey) as UserPayLoad
   return ({userID,companyID,appID,externalUserID})
 }

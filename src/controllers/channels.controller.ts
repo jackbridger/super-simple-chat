@@ -8,10 +8,10 @@ import {
     TypedRequestQueryWithBodyAndParams,
     TypedRequestQueryWithParams
 } from '../types';
-import { extractDataFromJWT } from "../utils/auth";
+import { extractDataFromRequestWithJWT } from "../utils/auth";
 
 export const getAllChannels = async function (req: Request, res: Response) {
-    const jwtData = extractDataFromJWT(req as Request)
+    const jwtData = extractDataFromRequestWithJWT(req as Request)
     if (!jwtData) return res.status(401).json({message:"You are not authorized to get channels"});
     const {userID} = jwtData
 
@@ -45,7 +45,7 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
 
     // if(!req.body.participant_ids.length) return res.sendStatus(400)
 
-    const jwtData = extractDataFromJWT(req as Request)
+    const jwtData = extractDataFromRequestWithJWT(req as Request)
 
     if (!jwtData) return res.status(401).json({message:"You are not authorized to create a channel"});
     const {userID,appID,externalUserID} = jwtData
@@ -67,6 +67,7 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
     if (!channelApp) return res.status(500).json({message:"There was an error adding the new channel to your app"})
     try{
         await addParticipantsToChannel(channelID, participantIDs,appID)
+        Socket.notifyNewChannel(channelID,name,participantIDs, appID)
         return res.send(channel)
     }catch(err){
         console.log(err)
@@ -80,7 +81,7 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
     //          participants
     //      };
 
-    //      Socket.notifyUsersOnChannelCreate(participant_ids as string[], conv)
+        //  Socket.notifyUsersOnChannelCreate(participant_ids as string[], conv)
     //      return res.send(conv);
 }
 const addChannel = async function(name:string,userID:string) {
@@ -141,6 +142,23 @@ const getIDFromExternalID = async function(externalID:string,appID:string) {
     }
 
 }
+export const addParticipantsToChannelByID = async function (req: TypedRequestQueryWithBodyAndParams<{channel_id: string},{participant_ids:string[]}>, res: Response) {
+    const jwtData = extractDataFromRequestWithJWT(req as unknown as Request)
+    if (!jwtData) return res.status(401).json({message:"You are not authorized to add participants to channels"});
+    if (!req.params.channel_id) return res.status(400).json({message:"You must provide a channel id in your request. For instance /channels/:channel_id/add-participants"})
+    if (!req.body.participant_ids) return res.status(400).json({message:"You must provide a participant_ids array in your request body. For instance {participant_ids: ['1234','5678']}"})
+    const {appID} = jwtData
+    const channelID = req.params.channel_id;
+    const participantIDs = req.body.participant_ids;
+    try{
+        await addParticipantsToChannel(channelID,participantIDs,appID)
+        return res.sendStatus(200)
+    }catch(err){
+        console.log(err)
+        return res.status(500).json({message:`There was an error adding your participants to the channel. ${err}`})
+    }
+}
+
 
 const addParticipantsToChannel = async function(channelID:string, participantIDs:string[],appID:string): Promise<void> {
     try{
@@ -157,10 +175,13 @@ const addParticipantsToChannel = async function(channelID:string, participantIDs
                 })
                 .select()
                 if (error) {
+                    console.log(error)
                     throw error
                 }
+                console.log(data)
 
             }catch(err){
+                console.log(err)
                 throw err
             }
         })
@@ -200,42 +221,54 @@ export const getChannelMessages = async function (req: TypedRequestQueryAndParam
 
     res.send(messages.data)
 }
-export const getChannelByID = async function (req: TypedRequestQueryWithParams<{channel_id: string}>, res: Response) {
-    if(!req.params.channel_id) return res.status(400).json({message:"You must provide a channel id"})
-    const { channel_id } = req.params;
+const fetchChannel = async (channelID:string) => {
     try {
         const {error,data} = await supabase
         .from('channels')
         .select(`*, 
-                users(
-                    app_user(
-                        external_user_id
+                channel_user(
+                    users (
+                        app_user (
+                            external_user_id
+                        )
                     )
                 )
                 `)
-        .eq('id', channel_id)
+        .eq('id', channelID)
         .single()
 
         if (error){
-            console.log(error)
-            res.sendStatus(500)
+            throw error
         }
         else {
-            if (!data) return res.status(404).json({message:"No channel found with that id"})
-            const rawUsers = data.users as {app_user:{external_user_id:string}[]}
-            const app_users = rawUsers ? rawUsers.app_user.map((user:{external_user_id:string}) => user.external_user_id) as string[] : []
+            if (!data) return null
+            
+            const rawUsers = data.channel_user as {users:{app_user:{external_user_id:string}[]}}[]
+            const participantIds = rawUsers.map(user => user.users.app_user.map(appUser => appUser.external_user_id)).flat()
             const resData = {
                 id: data.id,
                 name: data.name,
                 owner_user_id: data.owner_user_id,
-                participants: app_users
+                participants: participantIds
             }
-            return res.send(resData)
+            return resData
         }
     }catch(err){
-        console.log(err)
-        res.sendStatus(500)
+        throw err
     }
+}
+
+export const getChannelByID = async function (req: TypedRequestQueryWithParams<{channel_id: string}>, res: Response) {
+    if(!req.params.channel_id) return res.status(400).json({message:"You must provide a channel id"})
+    const { channel_id } = req.params;
+    try {
+        const channel = await fetchChannel(channel_id)
+        return res.send(channel)
+    }catch(err){
+        console.log(err)
+        return res.status(400).json({message:err})
+    }
+    
 }
 
 export const updateChannelByID = async function (req: TypedRequestQueryWithBodyAndParams<{channel_id: string} ,{name:string;owner_user_id:string}>, res: Response) {    

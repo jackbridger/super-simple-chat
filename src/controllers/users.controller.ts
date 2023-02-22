@@ -1,7 +1,7 @@
 import { Response,Request } from "express"
 import supabase from "../utils/supabase"
 import { TypedRequestBody, TypedRequestQuery, TypedRequestQueryWithParams } from "../types"
-import { extractDataFromJWT } from "../utils/auth"
+import { extractDataFromRequestWithJWT } from "../utils/auth"
 
 // export const createUser = async function (req: TypedRequestBody<{username: string;app_id:string}>, res: Response) {
 //     const dataFromJWT = extractDataFromJWT(req as Request)
@@ -58,7 +58,7 @@ const addUserToApp = async function(userID:string,appID:string,externalUserID:st
 
 
 export const getAllUsers = async function (req: Request, res: Response) {
-    const dataFromJWT = extractDataFromJWT(req as Request)
+    const dataFromJWT = extractDataFromRequestWithJWT(req as Request)
     if (!dataFromJWT) return res.sendStatus(401);
     const {appID} = dataFromJWT
     const { data, error } = await supabase
@@ -93,7 +93,7 @@ export const getUserByID = async function (req: TypedRequestQueryWithParams<{use
 export const updateCurrentUser = async function (req: TypedRequestBody<{display_name: string}>, res: Response) {
     // Note these are for updating the current user
     // If we want to update a user by ID, we need an admin route
-    const dataFromJWT = extractDataFromJWT(req as Request)
+    const dataFromJWT = extractDataFromRequestWithJWT(req as Request)
     if (!dataFromJWT) return res.sendStatus(401);
     const {userID} = dataFromJWT
 
@@ -141,7 +141,7 @@ export const deleteUserByID = async function (req: TypedRequestQueryWithParams<{
         }
 }
 export const deleteCurrentUser = async function (req:Request, res: Response) {
-    const dataFromJWT = extractDataFromJWT(req as Request)
+    const dataFromJWT = extractDataFromRequestWithJWT(req as Request)
     if (!dataFromJWT) return res.sendStatus(401);
     const {userID} = dataFromJWT
 

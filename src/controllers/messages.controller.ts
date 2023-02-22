@@ -8,7 +8,7 @@ import {
     TypedRequestQuery,
     TypedRequestQueryWithBodyAndParams
 } from '../types';
-import { extractDataFromJWT } from "../utils/auth";
+import { extractDataFromRequestWithJWT } from "../utils/auth";
 
 
 export const sendMessageToChannel = async function (req: TypedRequestBody<{message: string,channel_id:string}>, res: Response) {
@@ -34,7 +34,7 @@ export const sendMessageToChannel = async function (req: TypedRequestBody<{messa
     const channelID = req.body.channel_id
     const message = req.body.message
 
-    const dataFromJWT = extractDataFromJWT(req as Request)
+    const dataFromJWT = extractDataFromRequestWithJWT(req as Request)
     if (!dataFromJWT) {
         return res.sendStatus(401)
     }
@@ -46,7 +46,12 @@ export const sendMessageToChannel = async function (req: TypedRequestBody<{messa
     if (!messageUserID){return res.sendStatus(500)}
     const messageChannelID = await addMessageToChannel(messageID,channelID)
     if (!messageChannelID) {return res.sendStatus(500)}
+    console.log("about to send a broadcast")
+    Socket.notifyNewMessage(channelID, message)
     return res.send(messageID)
+    
+    
+    
     // add message to user
     // add message to channel
 

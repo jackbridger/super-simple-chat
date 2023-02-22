@@ -29,9 +29,10 @@ export interface TypedRequestQueryWithParams<Params> extends Express.Request {
 }
 
 export interface User {
+    external_user_id: string;
     id: string;
-    username: string;
-    created_at: string;
+    // display_name:string;
+    // created_at: string;
 }
 
 export interface Channel {
@@ -57,9 +58,15 @@ export interface UserChannel {
 
 export interface SocketConnectedUsers {
     [key: string]: {
-        socketId: string;
+        socketID: string;
         socket: Socket;
         user: User;
+    }
+}
+export interface SocketChannel {
+    [key: string]: {
+        socketId: string;
+        socket: Socket;
     }
 }
 

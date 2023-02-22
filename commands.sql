@@ -95,6 +95,7 @@ CREATE TABLE channel_user (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     user_id UUID REFERENCES users(id) on delete set null,
     channel_id UUID REFERENCES channels(id) on delete cascade
+    unique(channel_id, user_id)
 );
 
 CREATE TABLE channel_message (
