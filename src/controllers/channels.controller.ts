@@ -1,4 +1,3 @@
-import util from 'util'
 import { Response, Request } from "express"
 import supabase from "../utils/supabase"
 import Socket from '../utils/socket';
@@ -56,7 +55,6 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
     } = req.body;
 
     const participantIDs = receievedParticipantIds ? [...new Set([externalUserID,...receievedParticipantIds])] : [externalUserID]
-    console.log({participantIDs})
     // first create the channel 
     const channel = await addChannel(name,userID)
     if (!channel) return res.status(500).json({message:"There was an error creating the channel"})
@@ -73,16 +71,6 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
         console.log(err)
         return res.status(500).json({message:`There was an error adding your participants to the channel. ${err}`})
     }
-    // TO DO - bring this back without errors
-    
-    // const participants: User[] = [];
-    //      const conv: Channel = {
-    //          ...channel[0],
-    //          participants
-    //      };
-
-        //  Socket.notifyUsersOnChannelCreate(participant_ids as string[], conv)
-    //      return res.send(conv);
 }
 const addChannel = async function(name:string,userID:string) {
     try {

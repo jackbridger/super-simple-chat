@@ -6,6 +6,7 @@ const NEW_MESSAGE = 'new_message';
 const NEW_CHANNEL = 'new_channel';
 
 class Socket {
+    // TO DO - add middleware that does my auth check
     private static _instance: Socket;
 
     private io;
@@ -16,20 +17,31 @@ class Socket {
     private constructor(server: Server) {
         this.io = server;
         this.io.on('connection', async socket =>{
-            const user = await _initUser(socket)
-            if (!user) return
-            const {userID,externalUserID} = user
-            this.users[userID] = {socketID:socket.id, socket:socket,user:{
-                id:userID,
-                external_user_id:externalUserID
-            }}
-            const channelsList = await _getChannelsList(userID)
-            if (!channelsList) return
-            _joinChannels(socket,channelsList)
-            socket.on('disconnect', (disconnectReason:string) => {
-                console.log(`${externalUserID} disconnected because ${disconnectReason}`)
-                delete this.users[userID]
-            });
+            try{
+                const user = await _initUser(socket)
+                const {userID,externalUserID} = user
+                console.log(`${externalUserID} connected`)
+                this.users[userID] = {
+                    socketID:socket.id, 
+                    socket:socket,
+                    user:{
+                        id:userID,
+                        external_user_id:externalUserID
+                }}
+                const channelsList = await _getChannelsList(userID)
+                if (!channelsList) return
+                _joinChannels(socket,channelsList)
+
+                socket.on('disconnect', (disconnectReason:string) => {
+                    console.log(`${externalUserID} disconnected because ${disconnectReason}`)
+                    delete this.users[userID]
+                });
+            }
+            catch (error){
+                console.log(error)
+                return
+            }
+            
         })
     }
     public static notifyNewMessage  (channelID:string, message: string) {
@@ -86,10 +98,28 @@ const _joinChannels = (socket:SocketType,channelsList:string[]) => {
 
 const _initUser = async (socket:SocketType) => {
     const token = socket.handshake.auth.token
-    if (!token) return
+    if (!token) {
+        throw new Error("No token provided")
+    }
     const jwtData = extractDataFromJWT(token)
-    if (!jwtData) return
+    if (!jwtData) {
+        throw new Error("No user data provided in jwt")
+    }
     const {userID,appID,companyID,externalUserID} = jwtData
+
+    if (!userID) {
+        throw new Error("No userID provided in jwt")
+    }
+    if (!appID) {
+        throw new Error("No appID provided in jwt")
+    }
+    if (!companyID) {
+        throw new Error("No companyID provided in jwt")
+    }
+    if (!externalUserID) {
+        throw new Error("No externalUserID provided in jwt")
+    }
+    
     return ({userID,appID,companyID,externalUserID})
 }
 const _getUserIDsFromExternalIDs = async (externalUserIDs:string[],appID:string) => {
