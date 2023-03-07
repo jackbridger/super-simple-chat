@@ -61,6 +61,7 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
   }
 
   export const createToken = async (req: Request, res: Response) => {
+    console.log("inside create token")
     // Registers the user if they don't exist or connects them if they do 
     const jwtKey = process.env.SECRET_JWT_KEY
     if (!req.headers.authorization) {
@@ -70,6 +71,8 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
     // Developer provides this:
     // This is not the developer user, but the end user's user ID
     const externalUserID = req.body.user_id
+    console.log(req.body)
+    console.log('externalUserID ',externalUserID)
     // They send along app ID
     const appID = req.body.app_id
     const displayName = req.body.display_name ?? ""
