@@ -71,8 +71,6 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
     // Developer provides this:
     // This is not the developer user, but the end user's user ID
     const externalUserID = req.body.user_id
-    console.log(req.body)
-    console.log('externalUserID ',externalUserID)
     // They send along app ID
     const appID = req.body.app_id
     const displayName = req.body.display_name ?? ""
@@ -80,13 +78,13 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
     const companyID = await getCompanyIDFromAppID(appID)
 
     if (!externalUserID){
-      return res.status(403).json({error:"No user ID provided"})
+      return res.status(403).json({error:"No user_id provided"})
     }
     if (!appID){
-      return res.status(403).json({error:"No app ID provided"})
+      return res.status(403).json({error:"No app_id provided"})
     }
     if (!companyID){
-      return res.status(403).json({error:"No team"})
+      return res.status(403).json({error:"No company_id associated"})
     }
 
     const apikey = req.headers.authorization.split(' ')[1]
@@ -103,6 +101,7 @@ export const getServerAPIKey = async (req:TypedRequestBody<{appID:string}>, res:
     const token = jwt.sign(claims, jwtKey,{
       expiresIn:60000 // TO DO - need to make this longer & revokable and renewable
     })
+    console.log("generated token",token)
     return res.send(token)
   }
 
