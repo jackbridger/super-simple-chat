@@ -81,6 +81,7 @@ const addChannel = async function(name:string,userID:string) {
                 owner_user_id:userID
         })
         .select()
+        .single()
     if (channel.error) {
         console.log(channel.error)
         return null
