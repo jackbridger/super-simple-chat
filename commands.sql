@@ -30,6 +30,7 @@ CREATE TABLE users (
 CREATE TABLE channels (
     id UUID PRIMARY KEY default uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
+    last_message TEXT,
     owner_user_id UUID REFERENCES users(id) on delete set null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null

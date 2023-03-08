@@ -38,15 +38,18 @@ export const sendMessageToChannel = async function (req: TypedRequestBody<{messa
     if (!dataFromJWT) {
         return res.sendStatus(401)
     }
-    const {userID}= dataFromJWT
+    const {userID} = dataFromJWT
 
     const messageID = await addMessage(message)
     if (!messageID){return res.sendStatus(500)}
     const messageUserID = await addMessageToUser(messageID,userID)
     if (!messageUserID){return res.sendStatus(500)}
     const messageChannelID = await addMessageToChannel(messageID,channelID)
+
     if (!messageChannelID) {return res.sendStatus(500)}
-    console.log("about to send a broadcast")
+    const hasUpdatedLastMessage = await _updateLastMessage(channelID,message)
+    if (!hasUpdatedLastMessage) {return res.sendStatus(500)}
+
     Socket.notifyNewMessage(channelID, message)
     return res.send(messageID)
     
@@ -270,4 +273,21 @@ export const getChannelMessagesByID = async function (req: TypedRequestQueryWith
       console.log(err)
       res.sendStatus(500)
   }
+}
+
+const _updateLastMessage = async (channelID:string,message:string) => {
+  const {error,data} = await supabase
+  .from('channels')
+  .update({
+    last_message: message
+  })
+  .eq('id', channelID) 
+  .select()
+  if (error) {
+    console.log(error)
+    return null
+  } else {
+    return data[0]
+  }
+
 }

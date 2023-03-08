@@ -100,6 +100,7 @@ export interface Database {
           created_at: string
           id: string
           name: string
+          last_message?: string | null
           owner_user_id: string | null
           updated_at: string
         }
@@ -107,6 +108,7 @@ export interface Database {
           created_at?: string
           id?: string
           name: string
+          last_message?: string | null
           owner_user_id?: string | null
           updated_at?: string
         }
@@ -114,6 +116,7 @@ export interface Database {
           created_at?: string
           id?: string
           name?: string
+          last_message?: string | null
           owner_user_id?: string | null
           updated_at?: string
         }
