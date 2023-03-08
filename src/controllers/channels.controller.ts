@@ -59,7 +59,7 @@ export const createChannel = async function (req: TypedRequestBody<{participant_
     const channel = await addChannel(name,userID)
     if (!channel) return res.status(500).json({message:"There was an error creating the channel"})
 
-    const channelID = channel[0].id
+    const channelID = channel.id
     const channelApp = await addChannelToApp(channelID, appID)
     
     if (!channelApp) return res.status(500).json({message:"There was an error adding the new channel to your app"})
