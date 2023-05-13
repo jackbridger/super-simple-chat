@@ -2,6 +2,7 @@ import { Server,Socket as SocketType } from "socket.io";
 import { SocketConnectedUsers, SocketSocketIdUserId, User, Message, Channel, SocketChannel } from '../types';
 import { extractDataFromJWT } from "./auth";
 import supabase from "../utils/supabase";
+
 const NEW_MESSAGE = 'new_message';
 const NEW_CHANNEL = 'new_channel';
 
@@ -9,7 +10,7 @@ class Socket {
     // TO DO - add middleware that does my auth check
     private static _instance: Socket;
 
-    private io;
+    private io: Server;
     private users: SocketConnectedUsers = {};
     private socketIdUserId: SocketSocketIdUserId = {};
     private channels: SocketChannel = {};
@@ -18,7 +19,7 @@ class Socket {
         this.io = server;
         this.io.on('connection', async socket =>{
             try{
-                const user = await _initUser(socket)
+                const user = await this._initUser(socket)
                 const {userID,externalUserID} = user
                 console.log(`${externalUserID} connected`)
                 this.users[userID] = {
@@ -32,10 +33,7 @@ class Socket {
                 if (!channelsList) return
                 _joinChannels(socket,channelsList)
 
-                socket.on('disconnect', (disconnectReason:string) => {
-                    console.log(`${externalUserID} disconnected because ${disconnectReason}`)
-                    delete this.users[userID]
-                });
+                socket.on('disconnect', (reason:string) => this._onDisconnect(reason, userID));
             }
             catch (error){
                 console.log(error)
@@ -44,6 +42,37 @@ class Socket {
             
         })
     }
+    private async _initUser(socket:SocketType) {
+        const token = socket.handshake.auth.token
+        if (!token) {
+            throw new Error("No token provided")
+        }
+        const jwtData = extractDataFromJWT(token)
+        if (!jwtData) {
+            throw new Error("No user data provided in jwt")
+        }
+        const {userID,appID,companyID,externalUserID} = jwtData
+    
+        if (!userID) {
+            throw new Error("No userID provided in jwt")
+        }
+        if (!appID) {
+            throw new Error("No appID provided in jwt")
+        }
+        if (!companyID) {
+            throw new Error("No companyID provided in jwt")
+        }
+        if (!externalUserID) {
+            throw new Error("No externalUserID provided in jwt")
+        }
+        
+        return ({userID,appID,companyID,externalUserID})
+    }
+    private _onDisconnect(disconnectReason: string, userID: string) {
+        console.log(`User ${userID} disconnected because ${disconnectReason}`);
+        delete this.users[userID];
+    }
+
     public static notifyNewMessage  (channelID:string, message: string) {
         this._instance.io.to(channelID).emit(NEW_MESSAGE, message);
     }
@@ -96,32 +125,7 @@ const _joinChannels = (socket:SocketType,channelsList:string[]) => {
     })
 }
 
-const _initUser = async (socket:SocketType) => {
-    const token = socket.handshake.auth.token
-    if (!token) {
-        throw new Error("No token provided")
-    }
-    const jwtData = extractDataFromJWT(token)
-    if (!jwtData) {
-        throw new Error("No user data provided in jwt")
-    }
-    const {userID,appID,companyID,externalUserID} = jwtData
 
-    if (!userID) {
-        throw new Error("No userID provided in jwt")
-    }
-    if (!appID) {
-        throw new Error("No appID provided in jwt")
-    }
-    if (!companyID) {
-        throw new Error("No companyID provided in jwt")
-    }
-    if (!externalUserID) {
-        throw new Error("No externalUserID provided in jwt")
-    }
-    
-    return ({userID,appID,companyID,externalUserID})
-}
 const _getUserIDsFromExternalIDs = async (externalUserIDs:string[],appID:string) => {
     const resData = Promise.all(externalUserIDs.map(async (externalUserID:string) => {        
         const { data, error } = await supabase

@@ -9,8 +9,6 @@
     "lint": "eslint . --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "new-types": "npx supabase gen types typescript --project-id 'qrxgxdvbilytagyequng' --schema public > src/supabase.types.ts"
-
-
   },
   "repository": {
     "type": "git",
@@ -37,11 +35,15 @@
     "body-parser": "^1.20.1",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
+    "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.0",
+    "morgan": "^1.10.0",
     "socket.io": "^4.5.4",
     "ts-node": "^10.9.1"
   },
   "devDependencies": {
+    "@types/morgan": "^1.9.4",
     "eslint": "^8.32.0",
     "nodemon": "^2.0.20",
     "typescript": "^4.9.4"
